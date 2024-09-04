@@ -68,7 +68,6 @@ icons = {
     "Cafes/Bars": "fa-cocktail",
 }
 
-
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
@@ -79,9 +78,9 @@ def predict():
             return jsonify({'error': 'No text provided'}), 400
 
         # Find the closest match using fuzzy matching
-        closest_match, score = process.extractOne(text, icons.keys())
+        closest_match, _ = process.extractOne(text, icons.keys())
         
-        if closest_match and score > 80:  # Adjust score threshold as needed
+        if closest_match:
             icon_class = icons.get(closest_match, 'fa-question')
         else:
             # If no close match found, use the model to predict
@@ -91,6 +90,9 @@ def predict():
         return jsonify({'icon_class': icon_class})
 
     except Exception as e:
+        # Print the exception to the server logs
+        print(f"Error: {e}")
+        # Return a 500 error with the exception message
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
