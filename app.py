@@ -65,25 +65,33 @@ icons = {
     "Spa lounge/relaxation area": "fa-couch",
     "Spa/wellness packages": "fa-box",
     "Airport": "fa-plane-departure",
+    "Cafes/Bars": "fa-cocktail",
 }
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.json
-    text = data.get('text', '')
+    try:
+        data = request.json
+        text = data.get('text', '').strip()
 
-    # Find the closest match using fuzzy matching
-    closest_match, _ = process.extractOne(text, icons.keys())
-    
-    if closest_match:
-        icon_class = icons.get(closest_match, 'fa-question')
-    else:
-        # If no close match found, use the model to predict
-        predicted_icon = model.predict([text])[0]
-        icon_class = icons.get(predicted_icon, 'fa-question')
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
 
-    return jsonify({'icon_class': icon_class})
+        # Find the closest match using fuzzy matching
+        closest_match, score = process.extractOne(text, icons.keys())
+        
+        if closest_match and score > 80:  # Adjust score threshold as needed
+            icon_class = icons.get(closest_match, 'fa-question')
+        else:
+            # If no close match found, use the model to predict
+            predicted_icon = model.predict([text])[0]
+            icon_class = icons.get(predicted_icon, 'fa-question')
+
+        return jsonify({'icon_class': icon_class})
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
